@@ -99,10 +99,12 @@ const CurrencyConverter = () => {
         />
       </div>
       <div>
-        <h3>
-          {inputAmount} {sourceCurrency} is equal to {convertCurrency()}{" "}
-          {toCurrency}
-        </h3>
+        {inputAmount && (
+          <h3>
+            {inputAmount} {sourceCurrency} is equal to {convertCurrency()}
+            {toCurrency}
+          </h3>
+        )}
       </div>
     </div>
   );
