@@ -1,13 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import "./dashboard.css";
 
-const Home = () => {
+const Dashboard = () => {
   return (
-    <div>
+    <div className="container">
       <h1>Welcome to the Currency Converter</h1>
       <Link to="/converter">Go to Converter</Link>
     </div>
   );
 };
 
-export default Home;
+export default Dashboard;

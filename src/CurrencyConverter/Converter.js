@@ -1,25 +1,48 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import "./converter.css";
 
 const CurrencyConverter = () => {
-  // State variables to hold input amount, selected currencies, exchange rate, and available currencies
-  const [inputAmount, setInputAmount] = useState(1);
+  // State variables
+  const [inputAmount, setInputAmount] = useState();
   const [sourceCurrency, setSourceCurrency] = useState("USD");
-  const [targetCurrency, setTargetCurrency] = useState("INR");
+  const [toCurrency, setToCurrency] = useState("INR");
   const [exchangeRate, setExchangeRate] = useState(null);
   const [availableCurrencies, setAvailableCurrencies] = useState([]);
+  const [selectedDate, setSelectedDate] = useState("2021-01-01");
+
+  const API_KEY = "2181a2a9cf1a95096e7a4bf7";
 
   // Fetch exchange rates and available currencies when the component mounts or target currency changes
   useEffect(() => {
     axios
-      .get("https://open.er-api.com/v6/latest/USD")
+      .get(`https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`)
       .then((response) => {
-        const data = response.data.rates;
+        const data = response.data.conversion_rates;
         setAvailableCurrencies(Object.keys(data)); // Set available currencies from API data
-        setExchangeRate(data[targetCurrency]); // Set initial exchange rate for the target currency
+        setExchangeRate(data[toCurrency]); // Set initial exchange rate for the target currency
       })
       .catch((error) => console.error("Error fetching data:", error));
-  }, [targetCurrency]);
+  }, [toCurrency, inputAmount]);
+
+  // Fetch historical exchange rate whenever the sourceCurrency, toCurrency, or selectedDate changes
+  useEffect(() => {
+    const fetchHistoricalRate = async () => {
+      const [year, month, day] = selectedDate.split("-");
+      try {
+        const response = await axios.get(
+          `https://v6.exchangerate-api.com/v6/${API_KEY}/history/${sourceCurrency}/${year}/${month}/${day}`
+        );
+        console.log("Historical Rate Response:", response);
+        const data = response.data.conversion_rates;
+        setExchangeRate(data[toCurrency]);
+      } catch (error) {
+        console.error("Error fetching historical rate:", error);
+      }
+    };
+
+    fetchHistoricalRate();
+  }, [sourceCurrency, toCurrency, selectedDate, inputAmount]);
 
   // Function to convert the input amount based on the current exchange rate
   const convertCurrency = () => {
@@ -28,12 +51,13 @@ const CurrencyConverter = () => {
   };
 
   return (
-    <div>
+    <div className="currency-converter">
       <h2>Currency Converter</h2>
       <div>
         <label>Amount: </label>
         <input
           type="number"
+          placeholder="Please Enter Amount"
           value={inputAmount}
           onChange={(e) => setInputAmount(e.target.value)} // Update input amount state
         />
@@ -45,7 +69,7 @@ const CurrencyConverter = () => {
           onChange={(e) => setSourceCurrency(e.target.value)} // Update source currency state
         >
           {availableCurrencies.map((currency) => (
-            <option key={currency} value={currency}>
+            <option key={currency} value={currency} style={{ height: "50px" }}>
               {currency}
             </option>
           ))}
@@ -54,8 +78,8 @@ const CurrencyConverter = () => {
       <div>
         <label>To: </label>
         <select
-          value={targetCurrency}
-          onChange={(e) => setTargetCurrency(e.target.value)} // Update target currency state
+          value={toCurrency}
+          onChange={(e) => setToCurrency(e.target.value)} // Update target currency state
         >
           {availableCurrencies.map((currency) => (
             <option key={currency} value={currency}>
@@ -65,9 +89,19 @@ const CurrencyConverter = () => {
         </select>
       </div>
       <div>
+        <label>Date: </label>
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          min="2021-01-01"
+          max={new Date().toISOString().split("T")[0]}
+        />
+      </div>
+      <div>
         <h3>
           {inputAmount} {sourceCurrency} is equal to {convertCurrency()}{" "}
-          {targetCurrency}
+          {toCurrency}
         </h3>
       </div>
     </div>
