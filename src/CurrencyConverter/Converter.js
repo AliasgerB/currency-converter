@@ -11,7 +11,7 @@ const CurrencyConverter = () => {
   const [availableCurrencies, setAvailableCurrencies] = useState([]);
   const [selectedDate, setSelectedDate] = useState("2021-01-01");
 
-  const API_KEY = "2181a2a9cf1a95096e7a4bf7";
+  const API_KEY = process.env.REACT_APP_API_KEY;
 
   // Fetch exchange rates and available currencies when the component mounts or target currency changes
   useEffect(() => {
