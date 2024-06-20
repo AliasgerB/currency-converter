@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./converter.css";
 
+const cache = {};
 const CurrencyConverter = () => {
   // State variables
   const [inputAmount, setInputAmount] = useState();
@@ -15,10 +16,17 @@ const CurrencyConverter = () => {
 
   // Fetch exchange rates and available currencies when the component mounts or target currency changes
   useEffect(() => {
+    const cacheKey = `${sourceCurrency}_${toCurrency}_${inputAmount}`;
+
+    if (cache[cacheKey]) {
+      setExchangeRate(cache[cacheKey]);
+      return;
+    }
     axios
       .get(`https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`)
       .then((response) => {
         const data = response.data.conversion_rates;
+        cache[cacheKey] = data[toCurrency];
         setAvailableCurrencies(Object.keys(data)); // Set available currencies from API data
         setExchangeRate(data[toCurrency]); // Set initial exchange rate for the target currency
       })
@@ -28,6 +36,11 @@ const CurrencyConverter = () => {
   // Fetch historical exchange rate whenever the sourceCurrency, toCurrency, or selectedDate changes
   useEffect(() => {
     const fetchHistoricalRate = async () => {
+      const cacheKey = `${sourceCurrency}_${toCurrency}_${selectedDate}_${inputAmount}`;
+      if (cache[cacheKey]) {
+        setExchangeRate(cache[cacheKey]);
+        return;
+      }
       const [year, month, day] = selectedDate.split("-");
       try {
         const response = await axios.get(
@@ -35,13 +48,16 @@ const CurrencyConverter = () => {
         );
         console.log("Historical Rate Response:", response);
         const data = response.data.conversion_rates;
+        cache[cacheKey] = data[toCurrency];
         setExchangeRate(data[toCurrency]);
       } catch (error) {
         console.error("Error fetching historical rate:", error);
       }
     };
 
-    fetchHistoricalRate();
+    if (sourceCurrency && toCurrency && selectedDate) {
+      fetchHistoricalRate();
+    }
   }, [sourceCurrency, toCurrency, selectedDate, inputAmount]);
 
   // Function to convert the input amount based on the current exchange rate
@@ -69,7 +85,7 @@ const CurrencyConverter = () => {
           onChange={(e) => setSourceCurrency(e.target.value)} // Update source currency state
         >
           {availableCurrencies.map((currency) => (
-            <option key={currency} value={currency} style={{ height: "50px" }}>
+            <option key={currency} value={currency}>
               {currency}
             </option>
           ))}
